@@ -1,22 +1,13 @@
-(ns parjec.core)
+(ns parjec.core
+  (:use [clojure.algo.monads
+         :only (domonad with-monad
+                m-fmap m-plus m-result m-seq 
+                maybe-m
+                state-t)]))
 
-(defmonad parse-m
-  "A monad that describes parsing."
-  [m-result (fn [x]
-              (fn [stream]
-                [x stream]))
-   ; ^ Same as m-result from state-m
-   m-bind   (fn [parse f]
-              (fn [stream]
-                (let [result (parse stream)]
-                  (when (not= nil result)
-                    ((f (first result)) (second result))))))
-   ; m-zero is the parser that never succeeds :(
-   m-zero   (fn [stream] nil)
-   ; m-plus implements Parsec's <|> operator:
-   m-plus   (fn [& parsers]
-              (fn [stream]
-                (first (drop-while nil? (map #(% stream) parsers)))))])
+(def parse-m
+  "TODO long explanation..."
+  (state-t maybe-m))
 
 (defn any
   "Return a parser that parses any token or returns nil."
@@ -42,7 +33,8 @@
   "Return a parser for the given token-stream."
   [target]
   (if (empty? target)
-    (m-result ())
+    (with-monad parse-m
+      (m-result ()))
     (domonad parse-m
              [first-token (token (first target))
               other-tokens (tokens (rest target))]
@@ -52,27 +44,29 @@
 ;                                  Combinators
 ; =============================================================================
 
-(def choice
-  "Return a parser that tries the given parsers in order and returns the result
-  of the first one that works. If none work, return nil."
-  m-plus)
+(with-monad parse-m
+  (def choice
+    "Return a parser that tries the given parsers in order and returns the
+    result of the first one that works. If none work, return nil."
+    m-plus)
 
-(def nothing
-  "A parser that leaves the stream untouched and returns nil."
-  (m-result nil))
+  (def nothing
+    "A parser that leaves the stream untouched and returns nil."
+    (m-result nil)) 
+
+  (defn all
+    "FIXME"
+    "Return a parser that executes the given parsers in order."
+    [& parsers]
+    (letfn [(lift-results [results]
+              (m-result (apply concat results)))]
+     (m-fmap lift-results (m-seq parsers)))))
 
 (defn optional
   "Return a parser that doesn't consume input and returns nil if the given
   parser fails."
   [parser]
   (choice parser nothing))
-
-(defn all
-  "Return a parser that executes the given parsers in order."
-  [& parsers]
-  (letfn [liftresults [results]
-          (m-result (apply concat results))]
-   (m-fmap lift-results (m-seq parsers))))
 
 (def many1)
 
@@ -93,6 +87,13 @@
   "Return a parser that will match any of the given tokens."
   [tokens]
   (token-test (partial contains? (into #{} tokens))))
+
+(def sep-by)
+(def between)
+(def option-maybe)
+
+(def skip-many)
+(def skip-many1)
 
 ; =============================================================================
 ;                                Common helpers
@@ -141,5 +142,4 @@
 (def whitespace
   "Match any whitespace character."
   (choice carriage-return new-line space tab))
-
 

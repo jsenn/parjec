@@ -10,7 +10,7 @@
   (state-t maybe-m))
 
 (defn any
-  "Return a parser that parses any token or returns nil."
+  "Parse any token."
   [[first-token & other-tokens :as stream]]
   (if (empty? stream)
     nil
@@ -54,11 +54,11 @@
     "A parser that leaves the stream untouched and returns nil."
     (m-result nil)) 
 
-  (defn prefix
+  (defn prefix-by
     "Return a parser that will match the given prefix followed by the given
     pattern, returning the result of the pattern."
-    [pre pattern]
-    (m-bind pre (fn [_] pattern)))
+    [prefix pattern]
+    (m-bind prefix (fn [_] pattern)))
 
   (defn all
     "Return a parser that executes the given parsers in order."
@@ -85,6 +85,22 @@
             as (many parser)]
            (conj as a)))
 
+(def skip-many1)
+(defn skip-many
+  "Return a parser that will eat 0 or more of the given pattern without
+  returning anything."
+  [pattern]
+  (optional (skip-many1 pattern)))
+
+(defn skip-many1
+  "Return a parser that will eat 1 or more of the given pattern without
+  returning anything."
+  [pattern]
+  (domonad parse-m
+           [a pattern
+            as (skip-many pattern)]
+           nil))
+
 (defn one-of
   "Return a parser that will match any of the given tokens."
   [tokens]
@@ -104,7 +120,7 @@
   [separator pattern]
   (domonad parse-m
            [p pattern
-            ps (many1 (prefix separator pattern))]
+            ps (many1 (prefix-by separator pattern))]
            (conj ps p)))
 
 (defn between

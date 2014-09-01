@@ -1,7 +1,7 @@
 (ns parjec.core
   (:use [clojure.algo.monads
          :only (domonad with-monad
-                m-fmap m-plus m-result m-seq 
+                m-fmap m-plus m-result m-seq
                 maybe-m
                 state-t)]))
 
@@ -54,13 +54,16 @@
     "A parser that leaves the stream untouched and returns nil."
     (m-result nil)) 
 
+  (defn prefix
+    "Return a parser that will match the given prefix followed by the given
+    pattern, returning the result of the pattern."
+    [pre pattern]
+    (m-bind pre (fn [_] pattern)))
+
   (defn all
-    "FIXME"
     "Return a parser that executes the given parsers in order."
     [& parsers]
-    (letfn [(lift-results [results]
-              (m-result (apply concat results)))]
-     (m-fmap lift-results (m-seq parsers)))))
+    (m-seq parsers)))
 
 (defn optional
   "Return a parser that doesn't consume input and returns nil if the given
@@ -69,7 +72,6 @@
   (choice parser nothing))
 
 (def many1)
-
 (defn many
   "Return a parser that will execute the given parser 0 or more times."
   [parser]
@@ -88,12 +90,30 @@
   [tokens]
   (token-test (partial contains? (into #{} tokens))))
 
-(def sep-by)
-(def between)
-(def option-maybe)
+(defn sep-by
+  "Return a parser that will match any number of the given pattern
+  separated by the given separator, returning all of the matched
+  patterns."
+  [separator pattern]
+  (domonad parse-m
+           [p pattern
+            ps (many1 (prefix separator pattern))]
+           (conj ps p)))
 
-(def skip-many)
-(def skip-many1)
+(defn between
+  "Return a parser that will match `left` followed by `middle` followed by
+  `right`, and return the result of `middle`."
+  [left middle right]
+  (domonad parse-m
+           [_ left
+            m middle
+            _ right]
+           m))
+
+(defn tally
+  "Return a parser that will match `pattern` `n` times, returning the results."
+  [n pattern]
+  (apply all (repeat n pattern)))
 
 ; =============================================================================
 ;                                Common helpers
@@ -122,6 +142,10 @@
 (def alphanumeric
   "Match any alphanumeric character [0-9a-zA-Z]."
   (choice digit letter))
+
+(def comma
+  "Match a comma character."
+  (token \,))
 
 (def carriage-return
   "Match a carriage return character."

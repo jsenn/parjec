@@ -90,6 +90,13 @@
   [tokens]
   (token-test (partial contains? (into #{} tokens))))
 
+(defn none-of
+  "Return a parser that will match anything but the given tokens."
+  [tokens]
+  (token-test (fn [token]
+                (not (contains? (into #{} tokens)
+                                token)))))
+
 (defn sep-by
   "Return a parser that will match any number of the given pattern
   separated by the given separator, returning all of the matched

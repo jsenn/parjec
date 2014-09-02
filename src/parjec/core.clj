@@ -11,7 +11,10 @@
 
 (defmacro defparser
   "Define a named parser by offering the steps the parser should take, as well
-  as the expression it should use to return a value."
+  as the expression it should use to return a value.
+  `steps` should be a vector of bindings, where the right side of each binding
+  is a parser.
+  `expr` may be any valid clojure expression."
 
   ([parser-name doc-string steps expr]
    (let [doc-name (with-meta parser-name {:doc doc-string})]

@@ -134,7 +134,7 @@
   [separator pattern]
   (domonad parse-m
            [p pattern
-            ps (many1 (prefix-by separator pattern))]
+            ps (many (prefix-by separator pattern))]
            (conj ps p)))
 
 (defn between

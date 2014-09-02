@@ -165,6 +165,14 @@
 ;                                Common helpers
 ; =============================================================================
 
+(defn string
+  "Return a parser that parses the given tokens and returns a string of the
+  result."
+  [ts]
+  (domonad parse-m
+           [s (tokens ts)]
+           (apply str s)))
+
 (def lower-case
   "Match any lowercase letter [a-z]."
   (one-of "abcdefghijklmnopqrstuvwxyz"))

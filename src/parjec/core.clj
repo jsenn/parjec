@@ -9,6 +9,17 @@
   "TODO long explanation..."
   (state-t maybe-m))
 
+(defmacro defparser
+  "Define a named parser by offering the steps the parser should take, as well
+  as the expression it should use to return a value."
+
+  ([parser-name doc-string steps expr]
+   (let [doc-name (with-meta parser-name {:doc doc-string})]
+     `(defparser ~doc-name ~steps ~expr)))
+
+  ([parser-name steps expr]
+   `(def ~parser-name (domonad parse-m ~steps ~expr))))
+
 (defn any
   "Parse any token."
   [[first-token & other-tokens :as stream]]

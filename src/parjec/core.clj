@@ -133,6 +133,15 @@
             _ right]
            m))
 
+(defn end-by
+  "Return a parser that will match the given pattern followed by the given
+  ending, returning the given pattern."
+  [ending pattern]
+  (domonad parse-m
+           [p pattern
+            _ ending]
+           p))
+
 (defn tally
   "Return a parser that will match `pattern` `n` times, returning the results."
   [n pattern]

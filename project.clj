@@ -1,4 +1,4 @@
-(defproject parjec "0.1.0-SNAPSHOT"
+(defproject parjec "0.1.1"
   :description "Elegantly parse any sequential data structure."
   :url "jsenn.github.io/parjec"
   :license {:name "Eclipse Public License"
